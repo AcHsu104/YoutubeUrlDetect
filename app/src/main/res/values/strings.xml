@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">YoutubeUrlDetect</string>
+    <string name="youtube_edit_text_hint">please enter your youtube link</string>
+    <string name="youtube_generate_text">send</string>
+</resources>
