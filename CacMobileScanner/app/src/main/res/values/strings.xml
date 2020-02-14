@@ -8,5 +8,8 @@
 
     <string name="assets_id_text">財產編號</string>
     <string name="employee_id_text">員工編號</string>
+    <string name="employee_name_text">借用者姓名</string>
+
+    <string name="borrow_device_text">借用</string>
 </resources>
 

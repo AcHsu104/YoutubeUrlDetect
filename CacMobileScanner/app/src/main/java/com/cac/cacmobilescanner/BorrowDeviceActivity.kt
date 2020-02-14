@@ -12,6 +12,12 @@ import android.util.Log
 import kotlin.experimental.and
 import androidx.core.content.ContextCompat.getSystemService
 import android.icu.lang.UCharacter.GraphemeClusterBreak.T
+import com.cac.cacmobilescanner.http.RetrofitManager
+import com.cac.cacmobilescanner.http.repo.remote.DeviceRepo
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.schedulers.Schedulers
+import kotlinx.android.synthetic.main.activity_borrow_device.*
 
 /**
  *  Created by ac.hsu on 2020/2/4.
@@ -19,13 +25,31 @@ import android.icu.lang.UCharacter.GraphemeClusterBreak.T
  *  Copyright (c) 2020 104 Corporation
  */
 class BorrowDeviceActivity : AppCompatActivity() {
+    val compositeDisposable = CompositeDisposable()
+
+    companion object {
+        val KEY_DEVICE_ID = "KEY_DEVICE_ID"
+    }
+
     var pendingIntent : PendingIntent? = null
     var nfcAdapter: NfcAdapter? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_borrow_device)
+
         initNfc()
+
+        initView()
+        setListener()
+    }
+
+    fun getDeviceId() : String {
+        return intent.getStringExtra(KEY_DEVICE_ID) ?: ""
+    }
+
+    fun initView() {
+        device_id_edit.setText(getDeviceId())
     }
 
     fun initNfc() {
@@ -40,8 +64,43 @@ class BorrowDeviceActivity : AppCompatActivity() {
             nfcIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
             pendingIntent = PendingIntent.getActivity(this, 0, nfcIntent, 0)
         }
+    }
 
+    fun setListener() {
+        borrow_device_button.setOnClickListener {
+            callBorrowDevice(device_id_edit.text.toString(), employee_name_edit.text.toString())
+        }
+    }
 
+    fun callBorrowDevice(deviceId : String, borrowUserName : String) {
+        DeviceRepo.getService(RetrofitManager.getInstance(AppConfig.apiBaseUrl))
+            .borrowDevice(borrowUserName , deviceId)?.let {
+                it.subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe {
+                        it?.let {
+                            if ("1" == it.status && it.message != null) {
+                                when(it.message) {
+                                    "BORROWOK" -> borrowSuccess()
+                                    "NOPROPERTYUP" -> borrowFailure()
+                                }
+                            } else {
+                                Toast.makeText(applicationContext, "api 發生錯誤, 請確認網路狀態", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+            }?.let {
+                compositeDisposable.add(it)
+            }
+    }
+
+    fun borrowSuccess() {
+        showToast("借出成功")
+        finish()
+    }
+
+    fun borrowFailure() {
+        showToast("借出失敗, 請再試一次")
     }
 
     fun showToast(message : String) {
@@ -96,4 +155,8 @@ class BorrowDeviceActivity : AppCompatActivity() {
         nfcAdapter?.disableForegroundDispatch(this)
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        compositeDisposable.clear()
+    }
 }
