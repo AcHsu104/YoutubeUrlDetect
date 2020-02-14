@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">CacMobileScanner</string>
+    <string name="scan_text">借出/歸還手機</string>
+    <string name="warehouse_text">手機入庫</string>
+    <string name="admin_text">管理者設定</string>
+    <string name="mobile_list_text">手機借出列表</string>
+    <string name="other_text">其他</string>
+
+    <string name="assets_id_text">財產編號</string>
+    <string name="employee_id_text">員工編號</string>
+</resources>
+
